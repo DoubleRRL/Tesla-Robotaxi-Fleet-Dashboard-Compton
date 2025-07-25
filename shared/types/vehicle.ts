@@ -40,6 +40,7 @@ export interface Vehicle {
     milesSinceService: number;
     issues: Issue[];
   };
+  type: 'cybertruck' | 'modely' | 'modelx';
 }
 
 export interface Coordinate {

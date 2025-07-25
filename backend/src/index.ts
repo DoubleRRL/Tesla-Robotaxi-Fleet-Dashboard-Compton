@@ -3,6 +3,7 @@ import http from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import vehicleRoute from './routes/vehicle';
+import { initDb } from './utils/dbInit';
 
 envSetup();
 
@@ -27,7 +28,18 @@ io.of('/vehicles').on('connection', socket => {
     // broadcast to all dashboard clients
     io.of('/vehicles').emit('vehicle-update', data);
   });
+  socket.on('pull-over', rideData => {
+    // log rideData (could write to db/file)
+    console.log('PULL OVER:', rideData);
+    io.of('/vehicles').emit('pull-over-alert', rideData);
+  });
+  socket.on('control', cmd => {
+    // relay control commands to all sims
+    io.of('/vehicles').emit('control', cmd);
+  });
 });
+
+initDb();
 
 app.get('/health', (req, res) => res.send('ok'));
 

@@ -1,18 +1,18 @@
 import { Router } from 'express';
 import { spawn } from 'child_process';
 import axios from 'axios';
+import * as vehicleController from '../controllers/vehicleController';
 const router = Router();
 
 // POST /api/v1/vehicles/:id/route
-router.post('/:id/route', (req, res) => {
-  const { id } = req.params;
-  const { waypoints } = req.body;
-  // launch sim as child process
-  const sim = spawn('node', ['../simulation/src/VehicleSimulator.js', JSON.stringify({ id, waypoints })], {
-    stdio: 'inherit'
-  });
-  res.json({ status: 'ok', vehicleId: id, waypoints });
-});
+router.post('/', vehicleController.createVehicle);
+router.get('/:id', vehicleController.getVehicle);
+router.post('/:id/route', vehicleController.createRoute);
+router.get('/route/:id', vehicleController.getRoute);
+router.post('/:id/lock', vehicleController.lockVehicle);
+router.post('/:id/unlock', vehicleController.unlockVehicle);
+router.post('/:id/stop', vehicleController.stopVehicle);
+router.post('/:id/reroute', vehicleController.rerouteVehicle);
 
 // POST /api/v1/vehicles/snap-route
 router.post('/snap-route', async (req, res) => {
