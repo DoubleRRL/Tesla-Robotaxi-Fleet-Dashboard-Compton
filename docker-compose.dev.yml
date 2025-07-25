@@ -1,0 +1,51 @@
+version: '3.8'
+services:
+  frontend:
+    build: ./frontend
+    ports: ["3000:3000"]
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    volumes:
+      - ./frontend:/app
+    depends_on:
+      - backend
+
+  backend:
+    build: ./backend
+    ports: ["8000:8000"]
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://user:pass@postgres:5432/robotaxi
+      - REDIS_URL=redis://redis:6379
+      - OSRM_URL=http://osrm:5000
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - postgres
+      - redis
+      - osrm
+
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=robotaxi
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+
+  osrm:
+    image: osrm/osrm-backend
+    command: osrm-routed --algorithm mld /data/california-latest.osrm
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./simulation/osrm-data:/data
+
+volumes:
+  postgres_data: 

@@ -1,0 +1,13 @@
+{
+  "name": "simulation",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "start": "ts-node src/VehicleSimulator.ts"
+  },
+  "dependencies": {
+    "typescript": "^5.2.2",
+    "ts-node": "^10.9.1",
+    "axios": "^1.6.7"
+  }
+} 

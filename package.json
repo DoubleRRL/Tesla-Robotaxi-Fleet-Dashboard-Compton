@@ -1,0 +1,15 @@
+{
+  "name": "tesla-robotaxi-system",
+  "private": true,
+  "workspaces": ["frontend", "backend", "simulation", "shared"],
+  "scripts": {
+    "install:all": "npm install --workspaces --if-present",
+    "migrate": "cd backend && npm run migrate",
+    "seed": "cd backend && npm run seed",
+    "simulate": "cd simulation && npm run start",
+    "dev": "concurrently \"cd backend && npm run dev\" \"cd frontend && npm run dev\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+} 
