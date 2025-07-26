@@ -63,13 +63,13 @@ export default function FleetVehiclesPanel({ vehicles }: FleetVehiclesPanelProps
   const getVehicleIcon = (type: string) => {
     switch (type) {
       case 'cybertruck':
-        return '/cybertruck.png';
+        return '/assets/images/cybertruck.png';
       case 'modelx':
-        return '/model x.png';
+        return '/assets/images/model x.png';
       case 'modely':
-        return '/model y.png';
+        return '/assets/images/model y.png';
       default:
-        return '/tesla.png';
+        return '/assets/images/tesla.png';
     }
   };
 
