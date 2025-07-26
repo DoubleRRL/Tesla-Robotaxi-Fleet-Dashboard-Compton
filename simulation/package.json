@@ -6,8 +6,11 @@
     "start": "ts-node src/VehicleSimulator.ts"
   },
   "dependencies": {
-    "typescript": "^5.2.2",
-    "ts-node": "^10.9.1",
     "axios": "^1.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^24.1.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
   }
-} 
+}

@@ -25,7 +25,7 @@ router.post('/snap-route', async (req, res) => {
     const { data } = await axios.get(osrmUrl);
     const snapped = data.routes[0].geometry.coordinates.map(([lng, lat]: [number, number]) => [lat, lng]);
     res.json({ snapped });
-  } catch (e) {
+  } catch (e: any) {
     res.status(500).json({ error: 'osrm error', details: e.message });
   }
 });

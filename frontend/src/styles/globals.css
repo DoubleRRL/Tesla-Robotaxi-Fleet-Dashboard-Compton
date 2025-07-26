@@ -1,3 +1,66 @@
 @tailwind base;
 @tailwind components;
-@tailwind utilities; 
+@tailwind utilities;
+
+/* Apple Maps-style Vehicle Marker Styles */
+.tesla-vehicle-marker {
+  transition: all 0.3s ease-in-out;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.4));
+}
+
+.tesla-vehicle-marker svg {
+  transition: transform 0.3s ease-in-out;
+  transform-origin: center;
+}
+
+/* Vehicle movement animation - more subtle like Apple Maps */
+@keyframes vehicle-move {
+  0% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(-1px) scale(1.02); }
+  100% { transform: translateY(0px) scale(1); }
+}
+
+.tesla-vehicle-marker svg {
+  animation: vehicle-move 3s ease-in-out infinite;
+}
+
+/* Status-based colors and effects - Apple Maps style */
+.tesla-vehicle-marker.occupied svg {
+  filter: drop-shadow(0 0 10px rgba(0, 122, 255, 0.7));
+}
+
+.tesla-vehicle-marker.charging svg {
+  filter: drop-shadow(0 0 10px rgba(255, 149, 0, 0.7));
+  animation: vehicle-move 4s ease-in-out infinite;
+}
+
+.tesla-vehicle-marker.pull-over svg {
+  filter: drop-shadow(0 0 10px rgba(255, 59, 48, 0.7));
+  animation: vehicle-move 0.8s ease-in-out infinite;
+}
+
+.tesla-vehicle-marker.available svg {
+  filter: drop-shadow(0 0 10px rgba(52, 199, 89, 0.7));
+}
+
+/* Popup styles */
+.vehicle-popup {
+  min-width: 200px;
+}
+
+.vehicle-popup h3 {
+  color: #1f2937;
+  border-bottom: 2px solid #3b82f6;
+  padding-bottom: 4px;
+}
+
+/* Map container improvements */
+.leaflet-container {
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+/* Smooth transitions for all vehicle updates */
+.leaflet-marker-icon {
+  transition: all 0.3s ease-in-out;
+} 
