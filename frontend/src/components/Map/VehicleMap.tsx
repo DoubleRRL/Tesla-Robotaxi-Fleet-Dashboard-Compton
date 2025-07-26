@@ -6,7 +6,7 @@ import RouteOverlay from './RouteOverlay';
 import RouteControl from './RouteControl';
 import ProgressBar from '../Dashboard/ProgressBar';
 import StatsPanel from '../Dashboard/StatsPanel';
-import SurgePanel from '../Analytics/SurgePanel';
+
 import AdvancedControls from '../Controls/AdvancedControls';
 import AnalyticsPanel from '../Analytics/AnalyticsPanel';
 import ComptonBoundary from './ComptonBoundary';
@@ -35,8 +35,8 @@ export default function VehicleMap() {
     utilization: Math.round((Object.values(vehicleStats).filter((v: any) => v?.status === 'occupied').length / Math.max(1, Object.keys(vehicleStats).length)) * 100),
     avgTrip: 12 + Math.round(Math.random() * 8),
     revenue: 1200 + Math.round(Math.random() * 500),
-    surgeHistory: [1.0, 1.2, 1.5, 2.0, 1.7],
-    charging: Object.values(vehicleStats).filter((v: any) => v?.status === 'charging').length
+    charging: Object.values(vehicleStats).filter((v: any) => v?.status === 'charging').length,
+    pendingRiders: Object.values(vehicleStats).filter((v: any) => v?.status === 'en route' || v?.status === 'occupied').length
   };
 
   useEffect(() => {
@@ -146,8 +146,9 @@ export default function VehicleMap() {
   }
 
   async function handleSubmitRoute() {
-    if (snappedRoute.length < 2) {
-      alert('Please snap a route first');
+    const routeToSubmit = snappedRoute.length > 0 ? snappedRoute : route;
+    if (routeToSubmit.length < 2) {
+      alert('Please draw at least 2 waypoints on the map first');
       return;
     }
     if (!selectedVehicle) {
@@ -156,16 +157,24 @@ export default function VehicleMap() {
     }
     
     try {
-      await fetch(`http://localhost:8000/api/v1/vehicles/${selectedVehicle}/route`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ waypoints: snappedRoute })
-      });
-      setRoute([]);
-      setSnappedRoute([]);
-      alert(`Route sent to ${selectedVehicle}!`);
+      // Send manual route directly to the vehicle via socket
+      if (socket) {
+        socket.emit('manual-route', {
+          id: selectedVehicle,
+          waypoints: routeToSubmit
+        });
+        console.log(`Manual route sent to ${selectedVehicle}:`, routeToSubmit);
+        
+        // Clear the route after sending
+        setRoute([]);
+        setSnappedRoute([]);
+        
+        alert(`Route pushed to ${selectedVehicle}. Use "Return to Original Route" to restore original path.`);
+      } else {
+        alert('Socket connection not available');
+      }
     } catch (error) {
-      alert('Failed to send route. Please try again.');
+      alert('Error submitting route');
     }
   }
 
@@ -216,21 +225,54 @@ export default function VehicleMap() {
             )}
           </div>
           
-          {/* Route controls */}
-          <div className="bg-tesla-gray rounded-lg p-4">
-            <h3 className="text-white font-bold mb-2">Route</h3>
-            <p className="text-gray-400 text-xs mb-2">
-              Click map to draw waypoints, then snap to roads
-            </p>
-            <RouteControl route={snappedRoute} onSubmit={handleSubmitRoute} />
-            <button
-              className="w-full bg-tesla-blue text-white px-3 py-2 rounded font-bold mt-2 text-sm"
-              onClick={handleSnapRoute}
-              disabled={route.length < 2 || snapping || !selectedVehicle}
-            >
-              {snapping ? 'Snapping...' : 'Snap to Road'}
-            </button>
-          </div>
+          {/* Vehicle-specific route controls */}
+          {selectedVehicle ? (
+            <div className="bg-tesla-gray rounded-lg p-4">
+              <h3 className="text-white font-bold mb-2">Route Management - {selectedVehicle}</h3>
+              <p className="text-gray-400 text-xs mb-2">
+                Click map to draw waypoints, then snap to roads
+              </p>
+              <RouteControl route={snappedRoute} onSubmit={handleSubmitRoute} />
+              <div className="space-y-2 mt-2">
+                <button
+                  className="w-full bg-tesla-blue text-white px-3 py-2 rounded font-bold text-sm"
+                  onClick={handleSnapRoute}
+                  disabled={route.length < 2 || snapping}
+                >
+                  {snapping ? 'Snapping...' : 'Snap to Road'}
+                </button>
+                <button
+                  className="w-full bg-yellow-600 text-white px-3 py-2 rounded font-bold text-sm"
+                  onClick={() => {
+                    // Send command to return to original route
+                    if (socket) {
+                      socket.emit('control', { id: selectedVehicle, action: 'return-to-original' });
+                      console.log(`Return to original route command sent to ${selectedVehicle}`);
+                    }
+                  }}
+                >
+                  Return to Original Route
+                </button>
+                <button
+                  className="w-full bg-tesla-black text-white px-3 py-2 rounded font-bold text-sm"
+                  onClick={() => setRoute([])}
+                >
+                  Clear Route
+                </button>
+              </div>
+              <div className="mt-3 text-xs text-gray-400">
+                <p>• Vehicle will return to original route after manual intervention</p>
+                <p>• Use for emergency rerouting when vehicle gets stuck</p>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-tesla-gray rounded-lg p-4">
+              <h3 className="text-white font-bold mb-2">Route Management</h3>
+              <p className="text-gray-400 text-xs">
+                Select a vehicle to enable route management
+              </p>
+            </div>
+          )}
           
           {/* Advanced controls */}
           <div className="bg-tesla-gray rounded-lg p-4">
@@ -330,6 +372,9 @@ export default function VehicleMap() {
                     {availableBadges[id] && (
                       <span className="absolute left-8 top-0 bg-green-500 text-white rounded-full px-2 py-1 text-xs font-bold animate-bounce">available</span>
                     )}
+                    {vehicleData.status === 'en route' && (
+                      <span className="absolute left-8 top-0 bg-blue-500 text-white rounded-full px-2 py-1 text-xs font-bold animate-pulse">pickup</span>
+                    )}
                   </div>
                 );
               })}
@@ -350,9 +395,31 @@ export default function VehicleMap() {
             <AnalyticsPanel stats={analyticsStats} />
           </div>
           
-          {/* Surge panel - moved to right side */}
+          {/* Pending Riders panel */}
           <div className="bg-tesla-gray rounded-lg p-4">
-            <SurgePanel inUse={Object.values(vehicleStats).filter((v: any) => v?.status === 'occupied').length} total={Object.keys(vehicleStats).length} />
+            <h3 className="text-white font-bold text-sm mb-3">Pending Riders</h3>
+            <div className="space-y-2 text-xs">
+              <div className="flex justify-between">
+                <span className="text-gray-300">Waiting for Pickup:</span>
+                <span className="text-white font-semibold">
+                  {Object.values(vehicleStats).filter((v: any) => v?.status === 'en route').length}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-300">In Transit:</span>
+                <span className="text-white font-semibold">
+                  {Object.values(vehicleStats).filter((v: any) => v?.status === 'occupied').length}
+                </span>
+              </div>
+              <div className="w-full bg-tesla-black rounded-full h-2 mt-2">
+                <div
+                  className="bg-tesla-blue h-2 rounded-full transition-all duration-300"
+                  style={{ 
+                    width: `${(Object.values(vehicleStats).filter((v: any) => v?.status === 'en route' || v?.status === 'occupied').length / Math.max(1, vehicleIds.length)) * 100}%` 
+                  }}
+                ></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

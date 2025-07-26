@@ -66,6 +66,8 @@ let currentLat = waypoints[0] ? waypoints[0][0] : 33.9000;
 let currentLng = waypoints[0] ? waypoints[0][1] : -118.2200;
 let lastUpdateTime = Date.now();
 let refreshRequested = false;
+let originalRoute: [number, number][] = [];
+let manualRouteActive = false;
 
 // Get a random street intersection within Compton
 function getRandomStreetPoint(): [number, number] {
@@ -181,6 +183,7 @@ socket.on('refresh-all', () => {
   stopped = false;
   locked = false;
   rerouteRequested = false;
+  manualRouteActive = false;
   if (chargeTimeout) {
     clearTimeout(chargeTimeout);
     chargeTimeout = null;
@@ -192,12 +195,47 @@ socket.on('refresh-all', () => {
   lastUpdateTime = Date.now();
 });
 
+// Listen for manual route assignment
+socket.on('manual-route', (data) => {
+  if (data.id !== id) return;
+  console.log(`Vehicle ${id} received manual route with ${data.waypoints.length} waypoints`);
+  
+  // Save current route as original if not already saved
+  if (originalRoute.length === 0) {
+    originalRoute = [...waypoints];
+  }
+  
+  // Apply manual route
+  waypoints.length = 0;
+  waypoints.push(...data.waypoints);
+  idx = 0;
+  manualRouteActive = true;
+  
+  // Update position to start of new route
+  if (waypoints.length > 0) {
+    currentLat = waypoints[0][0];
+    currentLng = waypoints[0][1];
+  }
+  
+  console.log(`Vehicle ${id} now following manual route`);
+});
+
 socket.on('control', (cmd) => {
   if (cmd.id !== id) return;
   if (cmd.action === 'stop') stopped = true;
   if (cmd.action === 'unlock') locked = false;
   if (cmd.action === 'lock') locked = true;
   if (cmd.action === 'reroute') rerouteRequested = true;
+  if (cmd.action === 'return-to-original') {
+    console.log(`Vehicle ${id} returning to original route`);
+    if (originalRoute.length > 0) {
+      waypoints.length = 0;
+      waypoints.push(...originalRoute);
+      idx = 0;
+      manualRouteActive = false;
+      console.log(`Vehicle ${id} restored original route with ${originalRoute.length} waypoints`);
+    }
+  }
 });
 
 async function step() {
@@ -344,22 +382,28 @@ async function step() {
   }
 }
 
-// Start simulation when connected
-socket.on('connect', async () => {
-  console.log(`Vehicle ${id} starting simulation...`);
-  
-  // If no waypoints provided, generate initial route using streets
-  if (waypoints.length === 0) {
-    const initialRoute = await generateStreetRoute();
-    waypoints.push(...initialRoute);
-  }
-  
-  // Validate initial position
-  if (!isValidStreetPosition(currentLat, currentLng)) {
-    const [newLat, newLng] = getRandomStreetPoint();
-    currentLat = newLat;
-    currentLng = newLng;
-  }
-  
-  step();
-}); 
+  // Start simulation when connected
+  socket.on('connect', async () => {
+    console.log(`Vehicle ${id} starting simulation...`);
+    
+    // If no waypoints provided, generate initial route using streets
+    if (waypoints.length === 0) {
+      const initialRoute = await generateStreetRoute();
+      waypoints.push(...initialRoute);
+    }
+    
+    // Save original route for later restoration
+    if (originalRoute.length === 0) {
+      originalRoute = [...waypoints];
+      console.log(`Vehicle ${id} saved original route with ${originalRoute.length} waypoints`);
+    }
+    
+    // Validate initial position
+    if (!isValidStreetPosition(currentLat, currentLng)) {
+      const [newLat, newLng] = getRandomStreetPoint();
+      currentLat = newLat;
+      currentLng = newLng;
+    }
+    
+    step();
+  }); 
