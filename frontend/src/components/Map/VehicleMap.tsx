@@ -9,6 +9,7 @@ import StatsPanel from '../Dashboard/StatsPanel';
 
 import AdvancedControls from '../Controls/AdvancedControls';
 import AnalyticsPanel from '../Analytics/AnalyticsPanel';
+import FleetVehiclesPanel from '../Dashboard/FleetVehiclesPanel';
 import ComptonBoundary from './ComptonBoundary';
 import QuickTourPanel from '../Tour/QuickTourPanel';
 import 'leaflet/dist/leaflet.css';
@@ -421,6 +422,9 @@ export default function VehicleMap() {
               </div>
             </div>
           </div>
+
+          {/* Fleet Vehicles panel */}
+          <FleetVehiclesPanel vehicles={vehicleStats} />
         </div>
       </div>
       
