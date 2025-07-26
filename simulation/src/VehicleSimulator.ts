@@ -58,13 +58,14 @@ const COMPTON_STREETS = [
 
 let idx = 0;
 let charging = false;
-let chargeTimeout = null;
+let chargeTimeout: NodeJS.Timeout | null = null;
 let stopped = false;
 let locked = false;
 let rerouteRequested = false;
 let currentLat = waypoints[0] ? waypoints[0][0] : 33.9000;
 let currentLng = waypoints[0] ? waypoints[0][1] : -118.2200;
 let lastUpdateTime = Date.now();
+let refreshRequested = false;
 
 // Get a random street intersection within Compton
 function getRandomStreetPoint(): [number, number] {
@@ -170,6 +171,27 @@ function emitPullOver() {
   socket.emit('pull-over', rideData);
 }
 
+// Listen for refresh command from frontend
+socket.on('refresh-all', () => {
+  console.log(`Vehicle ${id} received refresh command`);
+  refreshRequested = true;
+  // Reset all state
+  idx = 0;
+  charging = false;
+  stopped = false;
+  locked = false;
+  rerouteRequested = false;
+  if (chargeTimeout) {
+    clearTimeout(chargeTimeout);
+    chargeTimeout = null;
+  }
+  // Generate new random position and route
+  const [newLat, newLng] = getRandomStreetPoint();
+  currentLat = newLat;
+  currentLng = newLng;
+  lastUpdateTime = Date.now();
+});
+
 socket.on('control', (cmd) => {
   if (cmd.id !== id) return;
   if (cmd.action === 'stop') stopped = true;
@@ -184,6 +206,38 @@ async function step() {
   const now = Date.now();
   if (now - lastUpdateTime < 1000) return; // Only update once per second
   lastUpdateTime = now;
+  
+  // Handle refresh request
+  if (refreshRequested) {
+    refreshRequested = false;
+    console.log(`Vehicle ${id} refreshing with new route and position`);
+    const newRoute = await generateStreetRoute();
+    waypoints.length = 0;
+    waypoints.push(...newRoute);
+    idx = 0;
+    
+    // Send initial position with random status
+    const randomStatus = Math.random() > 0.7 ? 'available' : 'en route';
+    const [startLat, startLng] = waypoints[0];
+    const randomBattery = 60 + Math.floor(Math.random() * 40); // 60-100%
+    const randomSpeed = randomStatus === 'available' ? 0 : 20 + Math.floor(Math.random() * 15);
+    
+    socket.emit('vehicle-update', {
+      id,
+      lat: startLat,
+      lng: startLng,
+      progress: 0,
+      speed: randomSpeed,
+      battery: randomBattery,
+      eta: randomStatus === 'available' ? 'available' : '3 min',
+      status: randomStatus,
+      heading: 0
+    });
+    
+    // Continue with new route
+    setTimeout(step, 2000);
+    return;
+  }
   
   if (rerouteRequested) {
     idx = 0;

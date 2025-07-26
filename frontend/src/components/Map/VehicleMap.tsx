@@ -29,6 +29,7 @@ export default function VehicleMap() {
   const [socketConnected, setSocketConnected] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
   const [vehicleInfoOpen, setVehicleInfoOpen] = useState(false);
+  const [socket, setSocket] = useState<any>(null);
 
   const analyticsStats = {
     utilization: Math.round((Object.values(vehicleStats).filter((v: any) => v?.status === 'occupied').length / Math.max(1, Object.keys(vehicleStats).length)) * 100),
@@ -39,19 +40,20 @@ export default function VehicleMap() {
   };
 
   useEffect(() => {
-    const socket = io('http://localhost:8000/vehicles');
+    const socketInstance = io('http://localhost:8000/vehicles');
+    setSocket(socketInstance);
     
-    socket.on('connect', () => {
+    socketInstance.on('connect', () => {
       console.log('Connected to backend');
       setSocketConnected(true);
     });
     
-    socket.on('disconnect', () => {
+    socketInstance.on('disconnect', () => {
       console.log('Disconnected from backend');
       setSocketConnected(false);
     });
     
-    socket.on('vehicle-update', (data: { id: string, lat: number, lng: number, progress?: number, speed?: number, battery?: number, eta?: string, status?: string }) => {
+    socketInstance.on('vehicle-update', (data: { id: string, lat: number, lng: number, progress?: number, speed?: number, battery?: number, eta?: string, status?: string }) => {
       console.log('Vehicle update:', data);
       setVehiclePositions((prev: any) => ({ ...prev, [data.id]: [data.lat, data.lng] }));
       setVehicleStats((prev: any) => ({ ...prev, [data.id]: { ...prev[data.id], ...data } }));
@@ -61,13 +63,13 @@ export default function VehicleMap() {
       }
     });
     
-    socket.on('pull-over-alert', (rideData: any) => {
+    socketInstance.on('pull-over-alert', (rideData: any) => {
       setPullOverAlert(rideData);
       setPullOverVehicles((prev: any) => ({ ...prev, [rideData.id]: true }));
       setTimeout(() => setPullOverVehicles((prev: any) => ({ ...prev, [rideData.id]: false })), 10000);
     });
     
-    return () => { socket.disconnect(); };
+    return () => { socketInstance.disconnect(); };
   }, []);
 
   function handleMapClick(e: any) {
@@ -235,15 +237,27 @@ export default function VehicleMap() {
             <AdvancedControls vehicleId={selectedVehicle || ''} disabled={!selectedVehicle} />
           </div>
           
-          {/* Help button */}
-          <div className="bg-tesla-gray rounded-lg p-4">
-            <button
-              onClick={() => setTourOpen(true)}
-              className="w-full bg-tesla-blue text-white px-3 py-2 rounded font-bold text-sm"
-            >
-              Quick Tour
-            </button>
-          </div>
+                                {/* Help button */}
+                      <div className="bg-tesla-gray rounded-lg p-4">
+                        <button
+                          onClick={() => setTourOpen(true)}
+                          className="w-full bg-tesla-blue text-white px-3 py-2 rounded font-bold text-sm mb-2"
+                        >
+                          Quick Tour
+                        </button>
+                        <button
+                          onClick={() => {
+                            // Send refresh command to all vehicles
+                            if (socket) {
+                              socket.emit('refresh-all');
+                              console.log('Refresh command sent to all vehicles');
+                            }
+                          }}
+                          className="w-full bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded font-bold text-sm"
+                        >
+                          Refresh All Vehicles
+                        </button>
+                      </div>
         </div>
         
         {/* Center map */}
