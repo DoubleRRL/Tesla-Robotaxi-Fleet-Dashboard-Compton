@@ -273,7 +273,24 @@ export const fleetMachine = createMachine({
           actions: assign({
             vehicles: ({ context, event }) => {
               const newVehicles = new Map(context.vehicles);
-              newVehicles.set(event.id, event);
+              // Extract vehicle data from the event
+              const vehicleData = {
+                id: event.id,
+                type: event.vehicleType,
+                position: event.position,
+                battery: event.battery,
+                speed: event.speed,
+                heading: event.heading,
+                route: event.route || [],
+                pickupLocation: event.pickupLocation,
+                destination: event.destination,
+                assignedRider: event.assignedRider,
+                progress: event.progress || 0,
+                eta: event.eta || '0 min',
+                status: event.status
+              };
+              newVehicles.set(event.id, vehicleData);
+              console.log('XState: Updated vehicle', event.id, 'Total vehicles:', newVehicles.size);
               return newVehicles;
             }
           })

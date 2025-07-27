@@ -84,12 +84,24 @@ export const useFleetState = () => {
         if (Array.isArray(vehicles)) {
           vehicles.forEach((vehicle: any) => {
             console.log('fetchInitialVehicles: sending VEHICLE_UPDATE to XState:', vehicle.id);
-            send({
-              type: 'VEHICLE_UPDATE',
+            const vehicleUpdateEvent = {
+              type: 'VEHICLE_UPDATE' as const,
               id: vehicle.id,
-              ...vehicle,
-              position: [vehicle.lat, vehicle.lng], // Ensure position property
-            });
+              vehicleType: vehicle.type,
+              position: [vehicle.lat, vehicle.lng],
+              battery: vehicle.battery || 100,
+              speed: vehicle.speed || 0,
+              heading: vehicle.heading || 0,
+              route: vehicle.route || [],
+              pickupLocation: vehicle.pickupLocation,
+              destination: vehicle.destination,
+              assignedRider: vehicle.assignedRider,
+              progress: vehicle.progress || 0,
+              eta: vehicle.eta || '0 min',
+              status: vehicle.status
+            };
+            console.log('fetchInitialVehicles: vehicle update event:', vehicleUpdateEvent);
+            send(vehicleUpdateEvent);
           });
         } else {
           console.warn('API returned non-array vehicles data:', vehicles);
@@ -129,12 +141,24 @@ export const useFleetState = () => {
 
       if (isWithinCompton && isValidPosition) {
         console.log('SOCKET: sending VEHICLE_UPDATE to XState:', data.id);
-        send({
-          type: 'VEHICLE_UPDATE',
+        const vehicleUpdateEvent = {
+          type: 'VEHICLE_UPDATE' as const,
           id: data.id,
-          ...data,
-          position: [data.lat, data.lng], // Ensure position property
-        });
+          vehicleType: data.type,
+          position: [data.lat, data.lng],
+          battery: data.battery || 100,
+          speed: data.speed || 0,
+          heading: data.heading || 0,
+          route: data.route || [],
+          pickupLocation: data.pickupLocation,
+          destination: data.destination,
+          assignedRider: data.assignedRider,
+          progress: data.progress || 0,
+          eta: data.eta || '0 min',
+          status: data.status
+        };
+        console.log('SOCKET: vehicle update event:', vehicleUpdateEvent);
+        send(vehicleUpdateEvent);
       } else {
         console.log(`Vehicle ${data.id} position invalid or outside Compton: ${lat}, ${lng}`);
       }
