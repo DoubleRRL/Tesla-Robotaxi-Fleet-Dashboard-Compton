@@ -75,12 +75,14 @@ const VehicleMarker: React.FC<{
           <h3 className="font-bold">{vehicle.id}</h3>
           <p><strong>Type:</strong> {vehicle.type}</p>
           <p><strong>Status:</strong> {vehicle.status}</p>
-          <p><strong>Battery:</strong> {vehicle.battery}%</p>
-          <p><strong>Speed:</strong> {vehicle.speed} mph</p>
-          <p><strong>ETA:</strong> {vehicle.eta}</p>
+          <p><strong>Battery:</strong> {vehicle.battery || 0}%</p>
+          <p><strong>Speed:</strong> {vehicle.speed || 0} mph</p>
+          <p><strong>ETA:</strong> {vehicle.eta || 'N/A'}</p>
           {vehicle.assignedRider && (
             <p><strong>Rider:</strong> {vehicle.assignedRider}</p>
           )}
+          <hr className="my-2" />
+          <p className="text-xs text-gray-500">Debug: Speed={JSON.stringify(vehicle.speed)}</p>
         </div>
       </Popup>
     </Marker>
@@ -232,6 +234,7 @@ const VehicleMap: React.FC = () => {
         {/* Vehicle routes */}
         {vehicles.map((vehicle) => {
           if (vehicle.route && vehicle.route.length > 1) {
+            console.log(`Rendering route for ${vehicle.id}:`, vehicle.route);
             return (
               <Polyline
                 key={`route-${vehicle.id}`}
@@ -241,6 +244,8 @@ const VehicleMap: React.FC = () => {
                 opacity={0.7}
               />
             );
+          } else {
+            console.log(`No route for ${vehicle.id}: route=`, vehicle.route);
           }
           return null;
         })}
@@ -310,20 +315,7 @@ const VehicleMap: React.FC = () => {
         )}
       </MapContainer>
 
-      {/* Debug panel */}
-      <div className="fixed top-4 left-4 z-50 bg-red-500 text-white p-2 rounded text-xs">
-        Socket: {socketConnected ? 'Connected' : 'Disconnected'}
-        <br />
-        Vehicles: {vehicleCount}
-        <br />
-        {selectedVehicle && (
-          <>
-            Selected: {selectedVehicle.id}
-            <br />
-            Status: {selectedVehicle.status}
-          </>
-        )}
-      </div>
+
 
       {/* Advanced Controls */}
       <AdvancedControls
@@ -354,19 +346,7 @@ const VehicleMap: React.FC = () => {
         🔄 Refresh All Vehicles
       </button>
 
-      {/* Debug overlay for vehicle count and summary */}
-      <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-black bg-opacity-80 text-white px-6 py-3 rounded shadow text-center text-lg font-mono">
-        <div>Vehicle Count: <span className="font-bold">{vehicles.length}</span></div>
-        {vehicles.length > 0 && (
-          <div className="text-xs mt-1">
-            {vehicles.map((v, i) => (
-              <div key={v.id}>
-                #{i + 1}: <span className="font-bold">{v.id}</span> | Pos: [{v.position?.[0]?.toFixed(5)}, {v.position?.[1]?.toFixed(5)}] | Status: {v.status}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+
     </div>
   );
 };
