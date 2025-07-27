@@ -92,12 +92,20 @@ npm run install:all
 # Start the development environment
 npm run dev
 
-# In a new terminal, launch vehicle simulators
-./launch-sims.sh
+# In a new terminal, launch vehicle simulators (with delays to prevent race conditions)
+./launch-sims-delayed.sh
 ```
 
 ### Access the Dashboard
 Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### ✅ Current Status
+**All systems operational!** The dashboard is fully functional with:
+- ✅ 15 vehicle simulators running and emitting real-time updates
+- ✅ Real-time vehicle tracking on OpenStreetMap
+- ✅ Interactive route creation and vehicle assignment
+- ✅ Advanced controls (lock, unlock, emergency stop, reroute)
+- ✅ Fleet analytics and monitoring
 
 ## 🎮 How to Use
 
@@ -158,7 +166,8 @@ robotaxi-fleet-dashboard/
 ```bash
 npm run install:all    # Install all dependencies
 npm run dev           # Start development servers
-npm run simulate      # Launch vehicle simulators
+./launch-sims-delayed.sh  # Launch vehicle simulators (recommended)
+./launch-sims.sh      # Launch simulators (legacy, may have race conditions)
 npm run migrate       # Run database migrations
 npm run seed          # Seed initial data
 ```
@@ -177,17 +186,21 @@ NEXT_PUBLIC_API_URL=http://localhost:3001
 
 ## 🚨 Safety Features
 
-- **Real-time Monitoring** - continuous vehicle tracking
+- **Real-time Monitoring** - continuous vehicle tracking with sub-second updates
 - **Emergency Controls** - immediate vehicle override capabilities
-- **Battery Management** - automatic charging coordination
-- **Pull-over Detection** - rider-initiated stops with logging
-- **Route Validation** - battery and safety checks before assignment
+- **Battery Management** - automatic charging coordination and battery checks
+- **Pull-over Detection** - rider-initiated stops with logging (<4% probability simulation)
+- **Route Validation** - battery and safety checks before route assignment
+- **Boundary Enforcement** - vehicles stay within Compton city limits
+- **Street-based Routing** - realistic movement on actual Compton streets
 
 ## 📈 Performance
 
 - **Sub-second Response** - <100ms latency for critical operations
-- **1000+ WebSockets** - scalable real-time communication
-- **99.9% Uptime** - production-ready reliability
+- **Real-time Updates** - 15 vehicles emitting updates every 1-3 seconds
+- **Stable WebSocket Connections** - 60s ping timeout, 25s interval
+- **Race Condition Prevention** - delayed simulator launches for reliability
+- **Boundary Validation** - real-time position validation within Compton limits
 - **Horizontal Scaling** - designed for 10,000+ vehicles
 
 ## 🔒 Security
@@ -216,6 +229,18 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions includin
 ## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🐛 Recent Fixes
+
+### Critical Bug Fixes (Latest Update)
+- **Fixed Vehicle Simulator Timing Bug** - Resolved issue where simulators weren't emitting updates due to incorrect `lastUpdateTime` initialization
+- **Improved Socket.io Stability** - Added proper ping timeout configuration (60s timeout, 25s interval)
+- **Race Condition Prevention** - Created `launch-sims-delayed.sh` with 0.5s delays between simulator launches
+- **Build Artifact Cleanup** - Updated `.gitignore` to exclude `.next/` directory
+
+### Known Issues
+- OSRM route snapping may fail occasionally (fallback to street points works)
+- Some vehicles may reposition when going off-street (automatic boundary enforcement)
 
 ## 🆘 Support
 
