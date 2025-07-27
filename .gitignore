@@ -3,6 +3,7 @@ node_modules/
 .env.*
 dist/
 build/
+.next/
 .DS_Store
 npm-debug.log
 coverage/

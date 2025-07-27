@@ -41,7 +41,10 @@ export default function VehicleMap() {
   };
 
   useEffect(() => {
-    const socketInstance = io('http://localhost:8000/vehicles');
+    const socketInstance = io('http://localhost:8000/vehicles', {
+      transports: ['websocket', 'polling'],
+      timeout: 5000
+    });
     setSocket(socketInstance);
     
     socketInstance.on('connect', () => {

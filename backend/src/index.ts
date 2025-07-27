@@ -16,7 +16,9 @@ const io = new Server(server, {
     credentials: true
   },
   transports: ['websocket', 'polling'],
-  allowEIO3: true
+  allowEIO3: true,
+  pingTimeout: 60000,
+  pingInterval: 25000
 });
 
 app.use(cors());
@@ -29,8 +31,10 @@ io.of('/vehicles').on('connection', socket => {
   
   // listen for sim updates
   socket.on('vehicle-update', data => {
-    console.log('Received vehicle update:', data.id);
+    console.log('Received vehicle update:', data.id, data.status, data.lat, data.lng);
     // broadcast to all dashboard clients
+    const clients = io.of('/vehicles').sockets;
+    console.log(`Broadcasting to ${clients.size} connected clients`);
     io.of('/vehicles').emit('vehicle-update', data);
   });
   
