@@ -6,13 +6,21 @@ interface VehicleData {
   battery?: number;
   speed?: number;
   eta?: string;
+  destination?: [number, number];
+  pickupLocation?: [number, number];
+  progress?: number;
+  route?: [number, number][];
 }
 
 interface FleetVehiclesPanelProps {
   vehicles: { [id: string]: VehicleData };
+  pendingRiders: Array<{
+    id: string;
+    assignedVehicle?: string;
+  }>;
 }
 
-export default function FleetVehiclesPanel({ vehicles }: FleetVehiclesPanelProps) {
+export default function FleetVehiclesPanel({ vehicles, pendingRiders }: FleetVehiclesPanelProps) {
   const getVehicleType = (id: string) => {
     if (id.includes('cybertruck')) return 'cybertruck';
     if (id.includes('modelx')) return 'modelx';
@@ -73,12 +81,14 @@ export default function FleetVehiclesPanel({ vehicles }: FleetVehiclesPanelProps
     }
   };
 
-  const formatStatus = (status: string) => {
+  const formatStatus = (status: string, vehicle: VehicleData) => {
     switch (status) {
       case 'en route':
-        return 'En Route to Pickup';
+        return vehicle.pickupLocation ? 'En Route to Pickup' : 'En Route';
+      case 'picking up':
+        return 'Picking Up Rider';
       case 'occupied':
-        return 'Dropoff in Progress';
+        return vehicle.destination ? 'En Route to Destination' : 'Dropoff in Progress';
       case 'available':
         return 'Idle - Available';
       case 'charging':
@@ -88,6 +98,23 @@ export default function FleetVehiclesPanel({ vehicles }: FleetVehiclesPanelProps
       default:
         return status || 'Unknown';
     }
+  };
+
+  const getDestinationInfo = (vehicle: VehicleData) => {
+    if (vehicle.status === 'en route' && vehicle.pickupLocation) {
+      return `Pickup: ${vehicle.eta || 'N/A'}`;
+    }
+    if (vehicle.status === 'occupied' && vehicle.destination) {
+      return `Destination: ${vehicle.eta || 'N/A'}`;
+    }
+    if (vehicle.status === 'picking up') {
+      return `Pickup in progress`;
+    }
+    return '';
+  };
+
+  const isVehicleAssigned = (vehicleId: string, pendingRiders: any[]) => {
+    return pendingRiders.some(rider => rider.assignedVehicle === vehicleId);
   };
 
   const vehicleIds = Object.keys(vehicles).sort();
@@ -130,8 +157,23 @@ export default function FleetVehiclesPanel({ vehicles }: FleetVehiclesPanelProps
                     <span className={getStatusColor(status)}>{getStatusIcon(status)}</span>
                   </div>
                   <div className="text-gray-400 truncate">
-                    {formatStatus(status)}
+                    {formatStatus(status, vehicle)}
                   </div>
+                  {getDestinationInfo(vehicle) && (
+                    <div className="text-blue-400 truncate text-xs">
+                      {getDestinationInfo(vehicle)}
+                    </div>
+                  )}
+                  {vehicle?.route && vehicle.route.length > 0 && (
+                    <div className="text-green-400 truncate text-xs">
+                      🛣️ Route: {vehicle.route.length} waypoints
+                    </div>
+                  )}
+                  {isVehicleAssigned(id, pendingRiders) && (
+                    <div className="text-yellow-400 truncate text-xs">
+                      🎯 Assigned to rider
+                    </div>
+                  )}
                 </div>
                 
                 {/* Vehicle Stats */}
@@ -139,8 +181,8 @@ export default function FleetVehiclesPanel({ vehicles }: FleetVehiclesPanelProps
                   <div className="text-white">
                     {vehicle?.battery || 'N/A'}%
                   </div>
-                  <div className="text-gray-400">
-                    {vehicle?.speed || 0} mph
+                  <div className="text-green-400 font-bold">
+                    {vehicle?.speed || 0} MPH 🇺🇸
                   </div>
                 </div>
               </div>

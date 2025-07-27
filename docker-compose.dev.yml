@@ -21,7 +21,11 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - ./simulation/osrm-data:/data
+      - ./osrm-data:/data
+    depends_on:
+      - postgres
+      - redis
+    platform: linux/amd64
 
 volumes:
   postgres_data: 

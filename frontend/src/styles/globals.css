@@ -56,8 +56,13 @@
 
 /* Map container improvements */
 .leaflet-container {
-  border-radius: 0.5rem;
-  overflow: hidden;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+}
+
+.ui-panel {
+  z-index: 1000;
 }
 
 /* Smooth transitions for all vehicle updates */

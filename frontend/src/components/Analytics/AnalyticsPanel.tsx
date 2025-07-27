@@ -3,8 +3,7 @@ import React from 'react';
             interface AnalyticsPanelProps {
               stats: {
                 utilization: number;
-                avgTrip: number;
-                revenue: number;
+                avgWaitTime: number;
                 charging: number;
                 pendingRiders: number;
               };
@@ -22,14 +21,11 @@ export default function AnalyticsPanel({ stats }: AnalyticsPanelProps) {
         </div>
         
         <div className="flex justify-between">
-          <span className="text-gray-300">Avg Trip Time:</span>
-          <span className="text-white font-semibold">{stats.avgTrip} min</span>
+          <span className="text-gray-300">Avg Wait Time:</span>
+          <span className="text-white font-semibold">{stats.avgWaitTime} min</span>
         </div>
         
-        <div className="flex justify-between">
-          <span className="text-gray-300">Revenue:</span>
-          <span className="text-white font-semibold">${stats.revenue}</span>
-        </div>
+
         
         <div className="flex justify-between">
           <span className="text-gray-300">Charging:</span>

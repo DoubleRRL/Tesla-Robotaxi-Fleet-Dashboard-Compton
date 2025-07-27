@@ -90,7 +90,7 @@ export default function VehicleMarker({ position, id, color, speed, heading, sta
           <h3 className="font-bold text-lg mb-2">Vehicle {id}</h3>
           <div className="space-y-1 text-sm">
             <div><span className="font-semibold">Status:</span> {status || 'Unknown'}</div>
-            <div><span className="font-semibold">Speed:</span> {speed || 0} mph</div>
+            <div><span className="font-semibold">Speed:</span> <span className="text-green-600 font-bold">{speed || 0} MPH 🇺🇸</span></div>
             <div><span className="font-semibold">Heading:</span> {heading || 0}°</div>
             <div><span className="font-semibold">Direction:</span> {getCardinalDirection(heading || 0)}</div>
           </div>

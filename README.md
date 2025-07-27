@@ -42,7 +42,6 @@ A real-time fleet management platform for Tesla robotaxis operating in Compton, 
 - **Real-time Alerts** - instant notification system
 
 ### 🎯 User Experience
-- **Quick Tour Guide** - step-by-step onboarding tutorial
 - **Tesla-Inspired UI** - dark theme with professional aesthetics
 - **Responsive Design** - optimized for various screen sizes
 - **Intuitive Controls** - easy-to-use interface for fleet operators
@@ -109,8 +108,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## 🎮 How to Use
 
-### 1. Quick Tour
-Click the "Quick Tour" button for step-by-step instructions.
+
 
 ### 2. Select a Vehicle
 - Click any vehicle marker on the map, or
@@ -245,7 +243,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 🆘 Support
 
 For issues and questions:
-- Check the Quick Tour in the application
+
 - Review the deployment documentation
 - Open an issue on GitHub
 

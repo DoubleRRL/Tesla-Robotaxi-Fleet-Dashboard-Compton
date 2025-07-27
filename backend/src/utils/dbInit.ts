@@ -1,7 +1,7 @@
 import { Pool } from 'pg';
 import axios from 'axios';
 
-const pool = new Pool({
+export const pool = new Pool({
   user: 'user',
   password: 'pass',
   host: 'localhost',
@@ -69,7 +69,11 @@ export async function initDb() {
       status TEXT,
       lat DOUBLE PRECISION,
       lng DOUBLE PRECISION,
-      progress INTEGER DEFAULT 0
+      progress INTEGER DEFAULT 0,
+      battery INTEGER DEFAULT 100,
+      speed INTEGER DEFAULT 0,
+      eta TEXT DEFAULT '0 min',
+      heading INTEGER DEFAULT 0
     );
   `);
   await pool.query(`
@@ -77,9 +81,19 @@ export async function initDb() {
       id TEXT PRIMARY KEY,
       vehicle_id TEXT,
       waypoints JSONB,
+      pickup_location JSONB,
+      destination JSONB,
       status TEXT
     );
   `);
+  
+  // Add missing columns if they don't exist
+  try {
+    await pool.query('ALTER TABLE routes ADD COLUMN IF NOT EXISTS pickup_location JSONB');
+    await pool.query('ALTER TABLE routes ADD COLUMN IF NOT EXISTS destination JSONB');
+  } catch (error) {
+    console.log('Columns may already exist:', error);
+  }
   // seed vehicles if table is empty
   const { rows } = await pool.query('SELECT COUNT(*) FROM vehicles');
   if (parseInt(rows[0].count) === 0) {
