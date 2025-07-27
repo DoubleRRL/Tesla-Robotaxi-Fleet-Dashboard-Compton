@@ -101,6 +101,18 @@ const VehicleMap: React.FC = () => {
     refreshAllVehicles
   } = useFleetState();
 
+  // Robust debug logging
+  useEffect(() => {
+    console.log('--- VEHICLE DEBUG LOG ---');
+    console.log('Vehicle count:', vehicles.length);
+    vehicles.forEach((v, i) => {
+      console.log(`#${i + 1}: id=${v.id}, position=${JSON.stringify(v.position)}, status=${v.status}`);
+    });
+    if (vehicles.length === 0) {
+      console.warn('No vehicles found in frontend state!');
+    }
+  }, [vehicles]);
+
   const [isDrawingRoute, setIsDrawingRoute] = useState(false);
   const [waypoints, setWaypoints] = useState<[number, number][]>([]);
   const mapRef = useRef<any>(null);
@@ -341,6 +353,20 @@ const VehicleMap: React.FC = () => {
       >
         🔄 Refresh All Vehicles
       </button>
+
+      {/* Debug overlay for vehicle count and summary */}
+      <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-black bg-opacity-80 text-white px-6 py-3 rounded shadow text-center text-lg font-mono">
+        <div>Vehicle Count: <span className="font-bold">{vehicles.length}</span></div>
+        {vehicles.length > 0 && (
+          <div className="text-xs mt-1">
+            {vehicles.map((v, i) => (
+              <div key={v.id}>
+                #{i + 1}: <span className="font-bold">{v.id}</span> | Pos: [{v.position?.[0]?.toFixed(5)}, {v.position?.[1]?.toFixed(5)}] | Status: {v.status}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -79,13 +79,16 @@ export const useFleetState = () => {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const vehicles = await response.json();
+        console.log('fetchInitialVehicles: received from backend:', vehicles);
         
         if (Array.isArray(vehicles)) {
           vehicles.forEach((vehicle: any) => {
+            console.log('fetchInitialVehicles: sending VEHICLE_UPDATE to XState:', vehicle.id);
             send({
               type: 'VEHICLE_UPDATE',
               id: vehicle.id,
-              ...vehicle
+              ...vehicle,
+              position: [vehicle.lat, vehicle.lng], // Ensure position property
             });
           });
         } else {
@@ -114,8 +117,10 @@ export const useFleetState = () => {
     const socket = socketRef.current;
 
     const handleVehicleUpdate = (data: any) => {
+      console.log('SOCKET vehicle-update event received:', data);
       // Validate position before updating
       const [lat, lng] = [data.lat, data.lng];
+      // Strict Compton city limits
       const isWithinCompton = lat >= 33.87442 && lat <= 33.92313 && 
                              lng >= -118.26315 && lng <= -118.17995;
       const isValidPosition = !isNaN(lat) && !isNaN(lng) && 
@@ -123,10 +128,12 @@ export const useFleetState = () => {
                              lng >= -118.3 && lng <= -118.1;
 
       if (isWithinCompton && isValidPosition) {
+        console.log('SOCKET: sending VEHICLE_UPDATE to XState:', data.id);
         send({
           type: 'VEHICLE_UPDATE',
           id: data.id,
-          ...data
+          ...data,
+          position: [data.lat, data.lng], // Ensure position property
         });
       } else {
         console.log(`Vehicle ${data.id} position invalid or outside Compton: ${lat}, ${lng}`);
