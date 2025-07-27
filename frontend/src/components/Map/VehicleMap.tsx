@@ -89,19 +89,29 @@ const VehicleMarker: React.FC<{
   );
 };
 
-const VehicleMap: React.FC = () => {
-  const {
-    vehicles,
-    selectedVehicle,
-    socketConnected,
-    vehicleCount,
-    selectVehicle,
-    sendRouteToVehicle,
-    sendEmergencyStop,
-    sendLockVehicle,
-    sendUnlockVehicle,
-    refreshAllVehicles
-  } = useFleetState();
+interface VehicleMapProps {
+  vehicles: any[];
+  selectedVehicle: any;
+  socketConnected: boolean;
+  onSelectVehicle: (vehicleId: string) => void;
+  onSendRoute: (vehicleId: string, route: [number, number][]) => void;
+  onEmergencyStop: (vehicleId: string) => void;
+  onLockVehicle: (vehicleId: string) => void;
+  onUnlockVehicle: (vehicleId: string) => void;
+  onRefreshVehicles: () => void;
+}
+
+const VehicleMap: React.FC<VehicleMapProps> = ({
+  vehicles,
+  selectedVehicle,
+  socketConnected,
+  onSelectVehicle,
+  onSendRoute,
+  onEmergencyStop,
+  onLockVehicle,
+  onUnlockVehicle,
+  onRefreshVehicles
+}) => {
 
   // Robust debug logging
   useEffect(() => {
@@ -131,19 +141,19 @@ const VehicleMap: React.FC = () => {
 
   // Route management handlers
   const handleSendRoute = useCallback((vehicleId: string, route: [number, number][]) => {
-    sendRouteToVehicle(vehicleId, route);
-  }, [sendRouteToVehicle]);
+    onSendRoute(vehicleId, route);
+  }, [onSendRoute]);
 
   const handleClearRoute = useCallback((vehicleId: string) => {
     // Send empty route to clear current route
-    sendRouteToVehicle(vehicleId, []);
-  }, [sendRouteToVehicle]);
+    onSendRoute(vehicleId, []);
+  }, [onSendRoute]);
 
   const handleReturnToOriginal = useCallback((vehicleId: string) => {
     // This would typically restore the original route from backup
     // For now, we'll just clear the current route
-    sendRouteToVehicle(vehicleId, []);
-  }, [sendRouteToVehicle]);
+    onSendRoute(vehicleId, []);
+  }, [onSendRoute]);
 
   const handleStartDrawing = useCallback(() => {
     setIsDrawingRoute(true);
@@ -163,13 +173,13 @@ const VehicleMap: React.FC = () => {
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && selectedVehicle) {
-        selectVehicle('');
+        onSelectVehicle('');
       }
     };
 
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [selectedVehicle, selectVehicle]);
+  }, [selectedVehicle, onSelectVehicle]);
 
   // On mount, store map instance and handle resize
   function MapReadyHandler() {
@@ -227,7 +237,7 @@ const VehicleMap: React.FC = () => {
             key={vehicle.id}
             vehicle={vehicle}
             isSelected={selectedVehicle?.id === vehicle.id}
-            onClick={() => selectVehicle(vehicle.id)}
+            onClick={() => onSelectVehicle(vehicle.id)}
           />
         ))}
 
@@ -320,9 +330,9 @@ const VehicleMap: React.FC = () => {
       {/* Advanced Controls */}
       <AdvancedControls
         selectedVehicle={selectedVehicle}
-        onEmergencyStop={sendEmergencyStop}
-        onLockVehicle={sendLockVehicle}
-        onUnlockVehicle={sendUnlockVehicle}
+        onEmergencyStop={onEmergencyStop}
+        onLockVehicle={onLockVehicle}
+        onUnlockVehicle={onUnlockVehicle}
       />
 
       {/* Route Control */}
@@ -340,7 +350,7 @@ const VehicleMap: React.FC = () => {
 
       {/* Refresh button */}
       <button
-        onClick={refreshAllVehicles}
+        onClick={onRefreshVehicles}
         className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-bold text-sm transition-colors"
       >
         🔄 Refresh All Vehicles
